@@ -6,8 +6,11 @@
   "retained_fpcs": ["FPC1", "FPC4"],
   "p_threshold": 0.05,
   "t_threshold": 1.6,
-  "r_squared": 0.4059,
-  "adj_r_squared": 0.1229,
+  "S_retained": false,
+  "S_estimate": 0,
+  "S_p_value": 1,
+  "r_squared": 0.4049,
+  "adj_r_squared": 0.1215,
   "reduced_r2": 0.3333,
   "reduced_adj_r2": 0.2873,
   "pages": {

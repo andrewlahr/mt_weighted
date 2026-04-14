@@ -1,12 +1,11 @@
 {
   "sites": [
-  
     {
       "id": "Beaverhead.FishAndGame",
       "site": "Beaverhead.FishAndGame",
       "n_years": 21,
-      "n_fpc_retained": 3,
-      "r_squared": 0.6558
+      "n_fpc_retained": 2,
+      "r_squared": 0.5478
     },
     {
       "id": "Beaverhead.Hildreth",
@@ -27,7 +26,7 @@
       "site": "BigHole.Melrose",
       "n_years": 32,
       "n_fpc_retained": 2,
-      "r_squared": 0.4059
+      "r_squared": 0.4049
     },
     {
       "id": "Bighorn.Bighorn",
@@ -177,5 +176,5 @@
       "r_squared": 0.3281
     }
   ],
-  "generated": "2026-04-14 12:29:36"
+  "generated": "2026-04-14 14:41:22"
 }

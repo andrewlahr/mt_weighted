@@ -1,4 +1,6 @@
 output/models/
 output/plots/
+imputed_output/
 *.RData
 .Rhistory
+.Rproj.user

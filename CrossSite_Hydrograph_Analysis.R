@@ -23,7 +23,8 @@ library(vegan)       # for NMDS, adonis2
 library(cluster)     # for silhouette
 library(dendextend)  # for coloured dendrograms
 library(corrplot)    # for correlation matrix visualisation
-library(mgcv)        # for smoothing
+# (mgcv no longer needed here — smoothing of β(t) happens inside WorkingFPCA.R
+#  and the smoothed curve is loaded directly from the saved plot_df object)
 
 # =============================================================================
 # 0. USER CONFIGURATION
@@ -57,94 +58,81 @@ rdata_files <- list.files(model_dir, pattern = "functional_regression_results\\.
 cat(sprintf("Found %d site result files.\n", length(rdata_files)))
 
 # --- 1a. First pass: load the per-site .RData into a structured list --------
-# Each .RData contains: mod_lm, fpca_out, beta_df, wh_df,
-#   beta_boot, beta_perm_mat, sim_threshold, n_fpc, fpc_scores, fpc_funs
-# We also need the reduced-model objects. To get those we re-run the
-# reduced model selection logic. ALTERNATIVELY, you can modify WorkingFPCA.R
-# to also save plot_df, sig_fpc_nums, mod_lm_reduced, etc. in the .RData.
+# Each .RData file written by WorkingFPCA.R now contains BOTH the full-model
+# objects (mod_lm, fpca_out, beta_df, wh_df, beta_boot, beta_perm_mat,
+# sim_threshold, n_fpc, fpc_scores, fpc_funs) AND the reduced-model objects
+# (mod_lm_reduced, sig_fpc_nums, sig_fpc_cols, plot_df, fpc_funs_reduced,
+# var_explained, r2_per_fpc, p_threshold, t_threshold). plot_df already
+# contains the smoothed beta(t) and significance flags.
 #
-# For robustness, this script works from the SAVED full-model objects and
-# re-derives what it needs. But it's much simpler if you add the reduced-
-# model objects to the save() call. Below we provide BOTH approaches.
+# Note: mod_lm and mod_lm_reduced are now `constrained_lm` objects (not lm)
+# because WorkingFPCA.R fits them with a one-sided box constraint on S_z.
+# They support coef(), summary(), fitted(), and residuals() the same way.
 
-# --- APPROACH A: If you added plot_df + sig_fpc_nums to the .RData save -----
-# Uncomment APPROACH A and comment out APPROACH B if you saved these objects.
-
-# --- APPROACH B: Rebuild from saved full-model objects -----------------------
-# This approach re-runs the significance selection on the saved full model.
-
-p_threshold <- 0.05
-t_threshold <- 1.6
+# Selection thresholds — kept here only as fallback values for any older
+# .RData files that don't have p_threshold / t_threshold saved inside them.
+# Updated to match WorkingFPCA.R defaults (1.6 t, 0.05 p).
+default_p_threshold <- 0.05
+default_t_threshold <- 1.6
 
 site_results <- lapply(rdata_files, function(f) {
   env <- new.env()
   load(f, envir = env)
-  
+
   # Extract site name from filename
   site_name <- gsub("^LL_|_functional_regression_results\\.RData$", "",
                      basename(f))
-  
+
   cat(sprintf("  Loading: %s\n", site_name))
-  
-  # --- Rebuild reduced model from full-model objects ---
-  full_summary <- summary(env$mod_lm)
-  t_stats            <- full_summary$coefficients[-1, "t value"]   # drop intercept
-  t_stats <- t_stats[which(names(t_stats)!='S')]
-  p_vals             <- full_summary$coefficients[-1, "Pr(>|t|)"]
-  p_vals <- p_vals[which(names(p_vals)!='S')]
-  
-  sig_pos <- which(p_vals < p_threshold | abs(t_stats) > t_threshold)
-  if (length(sig_pos) == 0) sig_pos <- order(abs(t_stats), decreasing = TRUE)[1]
-  sig_pos <- sig_pos[order(abs(t_stats[sig_pos]), decreasing = TRUE)]
-  sig_fpc_nums <- seq_len(env$n_fpc)[sig_pos]
-  
+
+  # --- Pull the reduced-model objects directly (saved by updated WorkingFPCA.R)
+  # Fall back gracefully if any are missing (older RData files).
+  has_plot_df       <- exists("plot_df", envir = env)
+  has_sig_fpc_nums  <- exists("sig_fpc_nums", envir = env)
+
+  if (!(has_plot_df && has_sig_fpc_nums)) {
+    warning(sprintf(
+      "%s: .RData missing reduced-model objects (plot_df, sig_fpc_nums). Skipping. Re-run WorkingFPCA.R for this site.",
+      site_name))
+    return(NULL)
+  }
+
+  plot_df       <- env$plot_df
+  sig_fpc_nums  <- env$sig_fpc_nums
+  beta_smooth   <- plot_df$beta_smooth
+  sim_sig_pos   <- plot_df$sim_sig_pos
+  sim_sig_neg   <- plot_df$sim_sig_neg
+  beta_t_reduced <- plot_df$beta_raw
+
   # Weighted hydrograph (365-length vector)
   wh_vec <- env$wh_df$weighted_anomaly
-  
+
   # Full-model beta(t) from beta_df (365-length, from the FULL model)
   beta_full <- env$beta_df$beta
-  
-  # Reconstruct reduced-model beta(t)
-  # Sign-flip and back-transform
-  fpc_funs_local <- env$fpc_funs  # already evaluated on doy_grid
-  scores_local   <- env$fpc_scores
-  coefs_full     <- coef(env$mod_lm)[-1]
-  
-  # Sign-flip FPCs with negative coefficients (same logic as WorkingFPCA.R)
-  flip_flags <- coefs_full[sig_pos] < 0
-  for (i in seq_along(sig_fpc_nums)) {
-    if (flip_flags[i]) {
-      fpc_funs_local[, sig_fpc_nums[i]] <- -fpc_funs_local[, sig_fpc_nums[i]]
-      scores_local[, sig_fpc_nums[i]]   <- -scores_local[, sig_fpc_nums[i]]
-      coefs_full[sig_pos[i]]            <- -coefs_full[sig_pos[i]]
-    }
+
+  # Variance explained per significant FPC (read from the saved object)
+  var_expl <- env$var_explained[sig_fpc_nums] * 100
+
+  # Model fits — both are now constrained_lm objects
+  r2_full         <- summary(env$mod_lm)$r.squared
+  r2_reduced      <- summary(env$mod_lm_reduced)$r.squared
+
+  # Spawner covariate info (S_z constrained <= 0 in the model)
+  full_coefs <- summary(env$mod_lm)$coefficients
+  if ("S_z" %in% rownames(full_coefs)) {
+    S_estimate <- unname(full_coefs["S_z", "Estimate"])
+    S_t        <- unname(full_coefs["S_z", "t value"])
+    S_p        <- unname(full_coefs["S_z", "Pr(>|t|)"])
+    # S is "retained" if it appears in the reduced model's coefficient table
+    reduced_coefs <- summary(env$mod_lm_reduced)$coefficients
+    S_retained <- "S_z" %in% rownames(reduced_coefs)
+  } else {
+    S_estimate <- NA_real_
+    S_t        <- NA_real_
+    S_p        <- NA_real_
+    S_retained <- FALSE
   }
-  
-  # Reduced beta(t)
-  fpc_funs_reduced <- fpc_funs_local[, sig_fpc_nums, drop = FALSE]
-  
-  # Refit reduced model to get proper coefficients
-  score_df_red <- data.frame(y = residuals(env$mod_lm) + fitted(env$mod_lm))
-  # Actually we need the original y and scores...
-  # Simpler: use the full-model coefficients for the selected FPCs
-  b_reduced <- coefs_full[sig_pos]
-  beta_t_reduced <- as.vector(fpc_funs_reduced %*% b_reduced)
-  
-  # Smooth the reduced beta(t)
-  smooth_mod     <- gam(beta ~ s(doy, bs = "ps", k = 20),
-                        data = data.frame(doy = 1:365, beta = beta_t_reduced))
-  beta_smooth    <- fitted(smooth_mod)
-  
-  # Significance flags from full model beta_df
-  sim_sig_pos <- env$beta_df$sim_sig_pos
-  sim_sig_neg <- env$beta_df$sim_sig_neg
-  
-  # Variance explained per FPC
-  var_expl <- env$fpca_out$varprop[sig_fpc_nums] * 100
-  
-  # R² of reduced model (approximate from full model)
-  r2_full <- summary(env$mod_lm)$r.squared
-  
+
   list(
     site          = site_name,
     wh_vec        = wh_vec,
@@ -157,10 +145,17 @@ site_results <- lapply(rdata_files, function(f) {
     n_sig         = length(sig_fpc_nums),
     var_explained = var_expl,
     r2_full       = r2_full,
-    sim_threshold = env$sim_threshold
+    r2_reduced    = r2_reduced,
+    sim_threshold = env$sim_threshold,
+    S_estimate    = S_estimate,
+    S_t           = S_t,
+    S_p           = S_p,
+    S_retained    = S_retained
   )
 })
 
+# Drop sites that failed to load
+site_results <- Filter(Negate(is.null), site_results)
 names(site_results) <- sapply(site_results, `[[`, "site")
 n_sites <- length(site_results)
 cat(sprintf("\nLoaded %d sites successfully.\n", n_sites))
@@ -256,6 +251,11 @@ metric_df <- bind_rows(lapply(site_results, function(sr) {
     neg_window_width  = ifelse(!is.na(neg_window_start), neg_window_end - neg_window_start + 1, 0),
     n_sig_fpcs        = sr$n_sig,
     r2_full           = sr$r2_full,
+    r2_reduced        = sr$r2_reduced,
+    S_estimate        = sr$S_estimate,
+    S_t               = sr$S_t,
+    S_p               = sr$S_p,
+    S_retained        = sr$S_retained,
     stringsAsFactors  = FALSE
   )
 })) %>%
@@ -263,7 +263,8 @@ metric_df <- bind_rows(lapply(site_results, function(sr) {
 
 cat("\n--- Summary Metrics ---\n")
 print(metric_df %>% dplyr::select(site, cluster, doy_peak_pos, doy_peak_neg,
-                                   n_sig_pos_days, n_sig_neg_days, r2_full))
+                                   n_sig_pos_days, n_sig_neg_days,
+                                   r2_full, S_retained, S_estimate))
 
 # =============================================================================
 # 6. PCA ON SUMMARY METRICS
@@ -275,7 +276,7 @@ pca_vars <- c("doy_peak_pos", "doy_peak_neg", "peak_pos_value", "peak_neg_value"
               "n_sig_pos_days", "n_sig_neg_days",
               "centroid_pos", "centroid_neg",
               "pos_window_width", "neg_window_width",
-              "n_sig_fpcs", "r2_full")
+              "n_sig_fpcs", "r2_full", "r2_reduced", "S_estimate")
 
 # Handle NAs: replace centroid NAs with 0 (no significant window)
 pca_data <- metric_df %>%
@@ -549,6 +550,52 @@ p_fpc_heat <- ggplot(fpc_heat_df, aes(x = FPC, y = fct_rev(site), fill = factor(
 ggsave(file.path(out_dir, "fpc_selection_heatmap.png"),
        p_fpc_heat, width = 10, height = max(5, n_sites * 0.35), dpi = 300)
 cat("Saved: fpc_selection_heatmap.png\n")
+
+# --- 8i. Spawner (S) effect strength across sites ---------------------------
+# WorkingFPCA.R now fits the spawner covariate S directly with its slope
+# constrained to be <= 0. This panel shows, for each site, how strong that
+# density-dependent depression of recruits-per-spawner ended up being.
+S_df <- metric_df %>%
+  dplyr::select(site, cluster, S_estimate, S_p, S_retained) %>%
+  mutate(
+    S_estimate = ifelse(is.na(S_estimate), 0, S_estimate),
+    sig_label  = case_when(
+      is.na(S_p)         ~ "n/a",
+      S_p < 0.001        ~ "***",
+      S_p < 0.01         ~ "**",
+      S_p < 0.05         ~ "*",
+      S_p < 0.10         ~ ".",
+      TRUE               ~ ""
+    ),
+    fill_grp   = ifelse(S_retained, "Retained (p < 0.05, b < 0)", "Not retained")
+  ) %>%
+  arrange(S_estimate) %>%
+  mutate(site = factor(site, levels = site))
+
+p_spawner <- ggplot(S_df, aes(x = S_estimate, y = site, fill = fill_grp)) +
+  geom_vline(xintercept = 0, color = "grey40", linewidth = 0.4) +
+  geom_col(width = 0.75, alpha = 0.9) +
+  geom_text(aes(label = sig_label),
+            hjust = -0.2, size = 3, color = "grey25") +
+  scale_fill_manual(
+    values = c("Retained (p < 0.05, b < 0)" = "#1f3864",
+               "Not retained"               = "grey75"),
+    name = NULL
+  ) +
+  labs(
+    title    = "Density-Dependent Spawner Effect (S, constrained ≤ 0)",
+    subtitle = "Constrained slope on z-scored S in the full model. Stars indicate significance level.",
+    x = "Standardized coefficient on S (negative = stronger density dependence)",
+    y = NULL
+  ) +
+  theme_classic(base_size = 11) +
+  theme(plot.title       = element_text(face = "bold"),
+        axis.text.y      = element_text(size = 7),
+        legend.position  = "bottom")
+
+ggsave(file.path(out_dir, "spawner_effect_strength.png"),
+       p_spawner, width = 10, height = max(5, n_sites * 0.32), dpi = 300)
+cat("Saved: spawner_effect_strength.png\n")
 
 # =============================================================================
 # 9. OPTIONAL: TEST COVARIATES AGAINST CLUSTERS / ORDINATION
