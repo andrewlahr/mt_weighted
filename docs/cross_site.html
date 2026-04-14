@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cross-site Synthesis — Flow–Recruitment FPCA</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <h1>Flow–Recruitment Functional Regression</h1>
+      <p class="tagline">Cross-site synthesis of β(t) curves and weighted hydrographs</p>
+    </div>
+    <nav class="tabs">
+      <a href="index.html">Per-site Results</a>
+      <a href="cross_site.html" class="active">Cross-site Synthesis</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <p class="section-description" style="margin-bottom: 2.5rem; max-width: 75ch;">
+    These figures compare flow–recruitment relationships across all sites
+    analysed. β(t) curves are clustered by L² functional distance, and summary
+    metrics are projected with PCA and NMDS. Site-level covariates can be
+    overlaid on the NMDS via <code style="font-family:var(--mono); font-size:0.85em;">envfit</code>
+    when a covariate file is provided.
+  </p>
+
+  <div class="cross-site-grid">
+
+    <article class="cross-site-card">
+      <div class="card-header">
+        <h3>I. Pairwise correlation of β(t) curves</h3>
+        <p class="desc">All sites correlated with one another and re-ordered by hierarchical clustering.</p>
+      </div>
+      <div class="card-body">
+        <img src="assets/cross_site/beta_correlation_matrix.png"
+             alt="Correlation matrix of β(t) curves across sites">
+      </div>
+    </article>
+
+    <article class="cross-site-card">
+      <div class="card-header">
+        <h3>II. Hierarchical clustering dendrogram</h3>
+        <p class="desc">Ward's D² clustering on L² functional distance; coloured by silhouette-optimal k.</p>
+      </div>
+      <div class="card-body">
+        <img src="assets/cross_site/site_dendrogram.png"
+             alt="Hierarchical clustering dendrogram of sites">
+      </div>
+    </article>
+
+    <article class="cross-site-card">
+      <div class="card-header">
+        <h3>III. β(t) curves by cluster</h3>
+        <p class="desc">All sites overlaid (top) and cluster-mean curves with individual sites in the background (bottom).</p>
+      </div>
+      <div class="card-body">
+        <img src="assets/cross_site/all_beta_curves_clustered.png"
+             alt="β(t) curves coloured by cluster">
+      </div>
+    </article>
+
+    <article class="cross-site-card">
+      <div class="card-header">
+        <h3>IV. PCA biplot of summary metrics</h3>
+        <p class="desc">Sites projected onto the first two PCs of extracted β(t) summary metrics.</p>
+      </div>
+      <div class="card-body">
+        <img src="assets/cross_site/pca_biplot.png"
+             alt="PCA biplot of β(t) summary metrics">
+      </div>
+    </article>
+
+    <article class="cross-site-card">
+      <div class="card-header">
+        <h3>V. NMDS ordination</h3>
+        <p class="desc">Non-metric multidimensional scaling on the full L² distance matrix.</p>
+      </div>
+      <div class="card-body">
+        <img src="assets/cross_site/nmds_ordination.png"
+             alt="NMDS ordination of sites by β(t) distance">
+      </div>
+    </article>
+
+    <article class="cross-site-card">
+      <div class="card-header">
+        <h3>VI. Timing of significant flow effects</h3>
+        <p class="desc">Peak DOY and centroids of significant β(t) windows for every site, sorted by cluster.</p>
+      </div>
+      <div class="card-body">
+        <img src="assets/cross_site/timing_summary.png"
+             alt="Timing summary of significant flow effects">
+      </div>
+    </article>
+
+    <article class="cross-site-card">
+      <div class="card-header">
+        <h3>VII. FPC selection heatmap</h3>
+        <p class="desc">Which FPCs were retained at each site — reveals whether the same flow modes matter everywhere.</p>
+      </div>
+      <div class="card-body">
+        <img src="assets/cross_site/fpc_selection_heatmap.png"
+             alt="Heatmap of FPC selection across sites">
+      </div>
+    </article>
+
+  </div>
+
+</main>
+
+<footer>
+  Generated from <code>CrossSite_Hydrograph_Analysis.R</code> · Functional
+  principal component regression following Ramsay &amp; Silverman (2005)
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "site": "Bitterroot.BellCrossing",
+  "n_years": 33,
+  "n_fpc_full": 10,
+  "n_fpc_retained": 3,
+  "retained_fpcs": ["FPC3", "FPC6", "FPC9"],
+  "p_threshold": 0.05,
+  "t_threshold": 1.6,
+  "r_squared": 0.5962,
+  "adj_r_squared": 0.3847,
+  "reduced_r2": 0.1873,
+  "reduced_adj_r2": 0.1032,
+  "pages": {
+    "panels": "page1_panels.png",
+    "summary": "page2_summary.png",
+    "all_fpcs": "page3_all_fpcs.png"
+  }
+}

@@ -1,0 +1,343 @@
+/* ==========================================================================
+   Flow–Recruitment Functional Regression — Results Viewer
+   Editorial / scientific journal aesthetic
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --ink:        #1a1a1a;
+  --ink-soft:   #3d3d3d;
+  --ink-fade:   #6b6b6b;
+  --paper:      #fbfaf7;
+  --rule:       #d4cfc4;
+  --rule-soft:  #e8e3d8;
+  --accent:     #1f3864;
+  --accent-2:   #8b1a1a;
+  --highlight:  #f5f0e1;
+  --serif:      'Fraunces', Georgia, 'Times New Roman', serif;
+  --sans:       'IBM Plex Sans', system-ui, sans-serif;
+  --mono:       'IBM Plex Mono', 'Courier New', monospace;
+  --max-width:  1200px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* ============ Header ================================================== */
+header.site-header {
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+  padding: 2rem 0 1.25rem;
+}
+
+.header-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.brand h1 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 0.25rem;
+}
+
+.brand .tagline {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--ink-fade);
+  font-weight: 400;
+}
+
+nav.tabs {
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+}
+
+nav.tabs a {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-fade);
+  text-decoration: none;
+  padding: 0.6rem 1.25rem;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+nav.tabs a:hover {
+  color: var(--ink);
+}
+
+nav.tabs a.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ============ Main layout ============================================= */
+main {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 2.5rem 2rem 4rem;
+}
+
+/* ============ Site selector =========================================== */
+.selector-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: white;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+}
+
+.selector-bar label {
+  font-family: var(--serif);
+  font-size: 1rem;
+  font-style: italic;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.selector-bar select {
+  flex: 1;
+  min-width: 220px;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--ink);
+  padding: 0.55rem 2.25rem 0.55rem 0.85rem;
+  background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%231a1a1a' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 0.85rem center;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.selector-bar select:hover,
+.selector-bar select:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.site-meta {
+  display: flex;
+  gap: 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--ink-fade);
+  letter-spacing: 0.02em;
+}
+
+.site-meta .meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.site-meta .meta-label {
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  color: var(--ink-fade);
+  letter-spacing: 0.08em;
+}
+
+.site-meta .meta-value {
+  font-size: 0.95rem;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+/* ============ Page sections =========================================== */
+.page-section {
+  margin-bottom: 4rem;
+  scroll-margin-top: 1rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.section-number {
+  font-family: var(--serif);
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--accent-2);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
+.section-header h2 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 1.6rem;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+}
+
+.section-description {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1rem;
+  color: var(--ink-fade);
+  max-width: 65ch;
+  margin-bottom: 1.5rem;
+}
+
+.figure-container {
+  background: white;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.figure-container img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.figure-container .caption {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.9rem;
+  color: var(--ink-fade);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--rule-soft);
+  text-align: left;
+  max-width: 90ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ============ Loading / empty state =================================== */
+.loading {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--ink-fade);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.05rem;
+}
+
+.error-box {
+  padding: 1.5rem;
+  background: #fff3f3;
+  border-left: 4px solid var(--accent-2);
+  margin: 2rem 0;
+  font-family: var(--serif);
+  color: var(--accent-2);
+}
+
+/* ============ Footer ================================================== */
+footer {
+  border-top: 1px solid var(--rule);
+  margin-top: 4rem;
+  padding: 2rem;
+  text-align: center;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--ink-fade);
+}
+
+footer code {
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 0.78rem;
+  background: var(--highlight);
+  padding: 0.1rem 0.35rem;
+  border-radius: 2px;
+}
+
+/* ============ Cross-site page ========================================= */
+.cross-site-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.5rem;
+}
+
+.cross-site-card {
+  background: white;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.cross-site-card .card-header {
+  padding: 1.25rem 1.5rem;
+  background: var(--highlight);
+  border-bottom: 1px solid var(--rule);
+}
+
+.cross-site-card .card-header h3 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 1.25rem;
+  color: var(--ink);
+  margin-bottom: 0.25rem;
+}
+
+.cross-site-card .card-header .desc {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.92rem;
+  color: var(--ink-fade);
+}
+
+.cross-site-card .card-body {
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.cross-site-card .card-body img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ============ Responsive ============================================== */
+@media (max-width: 720px) {
+  main { padding: 1.5rem 1rem 3rem; }
+  .header-inner { padding: 0 1rem; }
+  .brand h1 { font-size: 1.6rem; }
+  .selector-bar { flex-direction: column; align-items: stretch; }
+  .site-meta { flex-wrap: wrap; gap: 1rem; }
+  nav.tabs { width: 100%; justify-content: flex-start; }
+}

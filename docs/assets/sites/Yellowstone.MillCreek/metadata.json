@@ -1,0 +1,18 @@
+{
+  "site": "Yellowstone.MillCreek",
+  "n_years": 42,
+  "n_fpc_full": 7,
+  "n_fpc_retained": 1,
+  "retained_fpcs": "FPC3",
+  "p_threshold": 0.05,
+  "t_threshold": 1.6,
+  "r_squared": 0.3281,
+  "adj_r_squared": 0.1652,
+  "reduced_r2": 0.0436,
+  "reduced_adj_r2": 0.0197,
+  "pages": {
+    "panels": "page1_panels.png",
+    "summary": "page2_summary.png",
+    "all_fpcs": "page3_all_fpcs.png"
+  }
+}

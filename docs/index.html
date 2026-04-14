@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flow–Recruitment FPCA Results</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <h1>Flow–Recruitment Functional Regression</h1>
+      <p class="tagline">Site-by-site FPCA results for brown trout populations</p>
+    </div>
+    <nav class="tabs">
+      <a href="index.html" class="active">Per-site Results</a>
+      <a href="cross_site.html">Cross-site Synthesis</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- Site selector ---------------------------------------------------- -->
+  <div class="selector-bar">
+    <label for="site-select">Select a site:</label>
+    <select id="site-select" aria-label="Select a site">
+      <option value="">Loading sites…</option>
+    </select>
+    <div class="site-meta" id="site-meta" style="display:none;">
+      <div class="meta-item">
+        <span class="meta-label">Years</span>
+        <span class="meta-value" id="meta-years">—</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">FPCs retained</span>
+        <span class="meta-value" id="meta-fpcs">—</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">R²</span>
+        <span class="meta-value" id="meta-r2">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading state ---------------------------------------------------- -->
+  <div id="loading" class="loading">Select a site to view results.</div>
+
+  <!-- Results pages ---------------------------------------------------- -->
+  <div id="results" style="display:none;">
+
+    <section class="page-section" id="page-panels">
+      <div class="section-header">
+        <span class="section-number">I.</span>
+        <h2>Reduced model results</h2>
+      </div>
+      <p class="section-description">
+        Weighted hydrograph (A), observed vs. predicted log(R/S) (B in the
+        scatterplot), smoothed coefficient function β(t) with bootstrap and
+        permutation bands (B), and the harmonic loadings of the retained FPCs (C).
+      </p>
+      <div class="figure-container">
+        <img id="img-panels" alt="Reduced model results panels A–D">
+      </div>
+    </section>
+
+    <section class="page-section" id="page-summary">
+      <div class="section-header">
+        <span class="section-number">II.</span>
+        <h2>Full-model summary</h2>
+      </div>
+      <p class="section-description">
+        Coefficients, t-statistics, and p-values for every FPC included in the
+        full model. The “Retained” column marks which components passed the
+        selection criteria (p &lt; 0.05 or |t| &gt; 2.0) and were carried into
+        the reduced model.
+      </p>
+      <div class="figure-container">
+        <img id="img-summary" alt="Full model coefficient table and fit statistics">
+      </div>
+    </section>
+
+    <section class="page-section" id="page-allfpcs">
+      <div class="section-header">
+        <span class="section-number">III.</span>
+        <h2>Supplemental: all FPC harmonics</h2>
+      </div>
+      <p class="section-description">
+        The harmonic loading of every FPC included in the initial linear
+        model — significant (black) and non-significant (grey) alike — so that
+        flow modes near the significance threshold remain visible.
+      </p>
+      <div class="figure-container">
+        <img id="img-allfpcs" alt="All FPC harmonic loadings (supplemental)">
+      </div>
+    </section>
+
+  </div>
+
+</main>
+
+<footer>
+  Generated from <code>WorkingFPCA.R</code> · Functional principal component
+  regression following Ramsay &amp; Silverman (2005)
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "site": "BigHole.Melrose",
+  "n_years": 32,
+  "n_fpc_full": 9,
+  "n_fpc_retained": 2,
+  "retained_fpcs": ["FPC1", "FPC4"],
+  "p_threshold": 0.05,
+  "t_threshold": 1.6,
+  "r_squared": 0.4059,
+  "adj_r_squared": 0.1229,
+  "reduced_r2": 0.3333,
+  "reduced_adj_r2": 0.2873,
+  "pages": {
+    "panels": "page1_panels.png",
+    "summary": "page2_summary.png",
+    "all_fpcs": "page3_all_fpcs.png"
+  }
+}

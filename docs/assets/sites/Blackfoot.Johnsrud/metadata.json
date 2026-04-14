@@ -1,0 +1,18 @@
+{
+  "site": "Blackfoot.Johnsrud",
+  "n_years": 34,
+  "n_fpc_full": 9,
+  "n_fpc_retained": 5,
+  "retained_fpcs": ["FPC4", "FPC2", "FPC1", "FPC3", "FPC9"],
+  "p_threshold": 0.05,
+  "t_threshold": 1.6,
+  "r_squared": 0.6255,
+  "adj_r_squared": 0.4627,
+  "reduced_r2": 0.2061,
+  "reduced_adj_r2": 0.0643,
+  "pages": {
+    "panels": "page1_panels.png",
+    "summary": "page2_summary.png",
+    "all_fpcs": "page3_all_fpcs.png"
+  }
+}

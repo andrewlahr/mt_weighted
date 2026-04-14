@@ -1,0 +1,18 @@
+{
+  "site": "Beaverhead.FishAndGame",
+  "n_years": 21,
+  "n_fpc_full": 6,
+  "n_fpc_retained": 3,
+  "retained_fpcs": ["FPC1", "FPC5", "FPC3"],
+  "p_threshold": 0.05,
+  "t_threshold": 1.6,
+  "r_squared": 0.6558,
+  "adj_r_squared": 0.4705,
+  "reduced_r2": 0.4889,
+  "reduced_adj_r2": 0.3987,
+  "pages": {
+    "panels": "page1_panels.png",
+    "summary": "page2_summary.png",
+    "all_fpcs": "page3_all_fpcs.png"
+  }
+}

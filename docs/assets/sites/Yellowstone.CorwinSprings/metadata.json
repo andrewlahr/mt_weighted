@@ -1,0 +1,18 @@
+{
+  "site": "Yellowstone.CorwinSprings",
+  "n_years": 42,
+  "n_fpc_full": 7,
+  "n_fpc_retained": 4,
+  "retained_fpcs": ["FPC6", "FPC3", "FPC4", "FPC2"],
+  "p_threshold": 0.05,
+  "t_threshold": 1.6,
+  "r_squared": 0.5522,
+  "adj_r_squared": 0.4436,
+  "reduced_r2": 0.3612,
+  "reduced_adj_r2": 0.2921,
+  "pages": {
+    "panels": "page1_panels.png",
+    "summary": "page2_summary.png",
+    "all_fpcs": "page3_all_fpcs.png"
+  }
+}

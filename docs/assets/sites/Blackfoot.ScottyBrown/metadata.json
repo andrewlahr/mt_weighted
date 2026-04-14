@@ -1,0 +1,18 @@
+{
+  "site": "Blackfoot.ScottyBrown",
+  "n_years": 34,
+  "n_fpc_full": 9,
+  "n_fpc_retained": 1,
+  "retained_fpcs": "FPC2",
+  "p_threshold": 0.05,
+  "t_threshold": 1.6,
+  "r_squared": 0.5579,
+  "adj_r_squared": 0.3657,
+  "reduced_r2": 0.01,
+  "reduced_adj_r2": -0.0209,
+  "pages": {
+    "panels": "page1_panels.png",
+    "summary": "page2_summary.png",
+    "all_fpcs": "page3_all_fpcs.png"
+  }
+}

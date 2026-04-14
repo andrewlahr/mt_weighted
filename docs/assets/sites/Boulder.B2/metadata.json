@@ -1,0 +1,18 @@
+{
+  "site": "Boulder.B2",
+  "n_years": 41,
+  "n_fpc_full": 10,
+  "n_fpc_retained": 1,
+  "retained_fpcs": "FPC1",
+  "p_threshold": 0.05,
+  "t_threshold": 1.6,
+  "r_squared": 0.313,
+  "adj_r_squared": 0.0524,
+  "reduced_r2": 0.0877,
+  "reduced_adj_r2": 0.0643,
+  "pages": {
+    "panels": "page1_panels.png",
+    "summary": "page2_summary.png",
+    "all_fpcs": "page3_all_fpcs.png"
+  }
+}

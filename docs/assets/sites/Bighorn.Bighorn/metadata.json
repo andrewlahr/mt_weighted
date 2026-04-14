@@ -1,0 +1,18 @@
+{
+  "site": "Bighorn.Bighorn",
+  "n_years": 28,
+  "n_fpc_full": 5,
+  "n_fpc_retained": 1,
+  "retained_fpcs": "FPC2",
+  "p_threshold": 0.05,
+  "t_threshold": 1.6,
+  "r_squared": 0.1746,
+  "adj_r_squared": -0.0612,
+  "reduced_r2": 0.0396,
+  "reduced_adj_r2": 0.0026,
+  "pages": {
+    "panels": "page1_panels.png",
+    "summary": "page2_summary.png",
+    "all_fpcs": "page3_all_fpcs.png"
+  }
+}
