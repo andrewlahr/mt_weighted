@@ -1,12 +1,6 @@
 {
   "sites": [
-    {
-      "id": "_demo",
-      "site": "Demo Site (placeholder)",
-      "n_years": 25,
-      "n_fpc_retained": 3,
-      "r_squared": 0.612
-    },
+  
     {
       "id": "Beaverhead.FishAndGame",
       "site": "Beaverhead.FishAndGame",
