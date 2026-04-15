@@ -39,7 +39,7 @@ model_dir <- "output/models"
 covariate_file <- NULL   # e.g., "data/site_covariates.csv"
 
 # Output directory for cross-site figures
-out_dir <- "output/plots/cross_site"
+out_dir <- "docs/assets/cross_site"
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
 # =============================================================================

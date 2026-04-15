@@ -12,7 +12,7 @@
 "Boulder.B2",41,1,0.312967171302353,TRUE,""
 "Madison.Norris",43,3,0.446398377092422,TRUE,""
 "Madison.PineButte",42,1,0.504695126239887,TRUE,""
-"Madison.Varney",27,3,0.783622055201974,TRUE,""
+"Madison.Varney",11,1,0.863166015948001,FALSE,"n_years < 15"
 "Missouri.Cascade",35,3,0.611415228921991,TRUE,""
 "Missouri.Craig",40,1,0.723879671425845,TRUE,""
 "RockCreek.FishAndGame",19,2,0.857969913311133,TRUE,""
