@@ -526,7 +526,7 @@ p_pca <- ggplot(pca_scores, aes(x = PC1, y = PC2)) +
   # Site name labels (repelled so they don't pile up on a tight cluster)
   ggrepel::geom_text_repel(
     aes(label = site),
-    size               = 2.6,
+    size               = 3,
     color              = "grey20",
     bg.color           = "white",
     bg.r               = 0.15,
@@ -544,7 +544,7 @@ p_pca <- ggplot(pca_scores, aes(x = PC1, y = PC2)) +
     size               = 3.2,
     fontface           = "bold",
     color              = "#7a4a00",
-    fill               = scales::alpha("white", 0.9),
+    fill               = scales::alpha("white", 0.6),
     label.size         = 0.3,
     label.r            = unit(0.12, "lines"),
     label.padding      = unit(0.18, "lines"),
