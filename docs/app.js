@@ -16,6 +16,7 @@
   const imgPanel = document.getElementById('img-panels');
   const imgSumm  = document.getElementById('img-summary');
   const imgFpcs  = document.getElementById('img-allfpcs');
+  const imgYrFpc = document.getElementById('img-yearfpc');
 
   // ----- Persist last selected site in URL hash and localStorage --------
   const STORAGE_KEY = 'fpca-last-site';
@@ -60,6 +61,7 @@
       imgPanel.src = base + 'page1_panels.png';
       imgSumm.src  = base + 'page2_summary.png';
       imgFpcs.src  = base + 'page3_all_fpcs.png';
+      imgYrFpc.src = base + 'page4_year_fpc_heatmap.png';
 
       // Update doc title
       document.title = m.site + ' — Flow–Recruitment FPCA';

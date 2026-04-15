@@ -190,9 +190,9 @@ lapply(LL_Sections,function(SS){
   # read.csv('weightedHydrosDatIN.csv')%>%group_by(Stream.Section)%>%summarize(n_year=length(unique(Year)))%>%filter(n_year<20)#ggplot(aes(x=Stream.Section,y=n_year))+
   #   geom_bar(stat='identity',position=position_dodge())
   # --- 1. Load and inspect data -----------------------------------------------
-  StreamSection<-paste0(strsplit(SS,split = '\\.')[[1]][1],strsplit(SS,split = '\\.')[[1]][2])
   Stream<-strsplit(SS,split = '\\.')[[1]][1]
   Section<-strsplit(SS,split = '\\.')[[1]][2]
+   StreamSection<-paste0(strsplit(SS,split = '\\.')[[1]][1],strsplit(SS,split = '\\.')[[1]][2])
   if(SS=="BigHole.Melrose"){
     FishDat<-read.csv(here::here('../../LL/JAGS_PVA/ModelOutput/csvs_quadratic/',paste0(Stream,Section,"allParams.csv")))%>%
       filter(SummerLag==2 & WinterLag==2)
@@ -220,9 +220,6 @@ lapply(LL_Sections,function(SS){
     SS2<-'Ruby.Vigilante'
   }else{
     SS2<-SS
-  }
-  if(SS=='Madison.Varney'){
-    SS2<-'Madison.PineButte'
   }
   df<-read.csv(paste0('imputed_output/',SS2,'_imputed.csv'))%>%left_join(recruit_df)
   # df<-read.csv('weightedHydrosDatIN.csv')%>%filter(Stream.Section==SS & recruit_lag==2)
@@ -894,7 +891,7 @@ lapply(LL_Sections,function(SS){
   save(
     mod_lm, fpca_out, beta_df, wh_df,
     beta_boot, beta_perm_mat, sim_threshold,
-    n_fpc, fpc_scores, fpc_funs,
+    n_fpc, fpc_scores, fpc_funs, years_vec,
     mod_lm_reduced, sig_fpc_nums, sig_fpc_cols, plot_df,
     fpc_funs_reduced, var_explained, r2_per_fpc,
     p_threshold, t_threshold,
@@ -1158,6 +1155,91 @@ lapply(LL_Sections,function(SS){
           plot.title       = element_text(face = "bold", size = 13))
   
   # =============================================================================
+  # Page 4: Year × FPC score heatmap
+  # =============================================================================
+  # Shows how each year scored on each FPC. Helps answer "why was 2010
+  # important?" by making it obvious which flow modes that year scored
+  # extremely on. Years where ANY FPC score exceeds ±2 SD get a heavy black
+  # border around the entire column. The retained FPCs (in the reduced model)
+  # get bold row labels.
+  
+  # Build a long-format table of year × FPC scores. fpc_scores carries the
+  # sign-flipped values, so the heatmap is consistent with how β(t) is presented.
+  yr_fpc_df <- as.data.frame(fpc_scores) %>%
+    mutate(Year = years_vec) %>%
+    pivot_longer(cols = -Year, names_to = "FPC", values_to = "score") %>%
+    mutate(
+      fpc_num = as.integer(sub("FPC", "", FPC)),
+      FPC     = factor(FPC, levels = paste0("FPC", n_fpc:1))   # FPC1 at top
+    )
+  
+  # Per-FPC z-scores (each FPC compared to its own SD across years)
+  yr_fpc_df <- yr_fpc_df %>%
+    group_by(FPC) %>%
+    mutate(score_z = as.numeric(scale(score))) %>%
+    ungroup()
+  
+  # Identify "extreme" years: any FPC |z| > 2
+  extreme_years <- yr_fpc_df %>%
+    group_by(Year) %>%
+    summarise(max_abs_z = max(abs(score_z))) %>%
+    filter(max_abs_z > 2) %>%
+    pull(Year)
+  
+  # A separate data frame just for column borders on extreme years
+  extreme_outline_df <- expand.grid(Year = extreme_years,
+                                    FPC  = levels(yr_fpc_df$FPC))
+  
+  # Color limits: symmetric around zero based on observed score range
+  score_lim <- max(abs(yr_fpc_df$score)) * 1.05
+  
+  # Bold the retained FPCs in the row labels by building a face vector
+  fpc_levels  <- levels(yr_fpc_df$FPC)
+  y_face_vec  <- ifelse(fpc_levels %in% sig_fpc_cols, "bold", "plain")
+  y_color_vec <- ifelse(fpc_levels %in% sig_fpc_cols, "black", "grey50")
+  
+  p_yr_fpc <- ggplot(yr_fpc_df, aes(x = factor(Year), y = FPC)) +
+    geom_tile(aes(fill = score), color = "white", linewidth = 0.4) +
+    # Highlight extreme-year columns with thick black border
+    geom_tile(data = extreme_outline_df,
+              aes(x = factor(Year), y = FPC),
+              fill = NA, color = "black", linewidth = 0.9,
+              inherit.aes = FALSE) +
+    geom_text(aes(label = sprintf("%.1f", score)),
+              size = 2.6, color = "grey15") +
+    scale_fill_gradient2(
+      low = "#b2182b", mid = "#f7f7f7", high = "#2166ac",
+      midpoint = 0, limits = c(-score_lim, score_lim),
+      name = "FPC score"
+    ) +
+    labs(
+      title    = "Page 4: Year × FPC Score Heatmap",
+      subtitle = paste0(
+        "Rows = FPCs (retained FPCs in bold black; others in grey).  ",
+        "Columns = years.  ",
+        "Black-bordered columns = years with at least one |score| > 2 SD."
+      ),
+      x = "Year", y = NULL
+    ) +
+    theme_classic(base_size = 11) +
+    theme(
+      plot.title       = element_text(face = "bold", size = 13),
+      plot.subtitle    = element_text(size = 10, color = "grey40"),
+      axis.text.x      = element_text(angle = 45, hjust = 1),
+      axis.text.y      = element_text(face = y_face_vec, color = y_color_vec),
+      axis.ticks.y     = element_blank(),
+      legend.position  = "right",
+      panel.grid       = element_blank()
+    )
+  
+  if (length(extreme_years) > 0) {
+    cat(sprintf("Extreme years (|FPC z-score| > 2): %s\n",
+                paste(sort(extreme_years), collapse = ", ")))
+  } else {
+    cat("No extreme years (no FPC z-score exceeds 2 SD)\n")
+  }
+  
+  # =============================================================================
   # Export per-page artifacts: PNGs for the website + per-page PDFs for the
   # multi-page PDF (each page sized to its own content to eliminate whitespace gaps)
   # =============================================================================
@@ -1181,6 +1263,10 @@ lapply(LL_Sections,function(SS){
   n_rows_supp <- ceiling(n_fpc / ncol_supp)
   page3_h     <- max(6, 2.5 + n_rows_supp * 1.8)
   
+  # Page 4: scales with both the number of FPCs (rows) and number of years (cols)
+  page4_w <- max(11, 2 + length(years_vec) * 0.55)
+  page4_h <- max(5, 1.5 + n_fpc * 0.4)
+  
   # --- 1. PNGs for the website (one per page) ---------------------------------
   ggsave(file.path(assets_dir, "page1_panels.png"),
          fig_final, width = page1_w, height = page1_h, dpi = 150, limitsize = FALSE)
@@ -1193,6 +1279,9 @@ lapply(LL_Sections,function(SS){
   ggsave(file.path(assets_dir, "page3_all_fpcs.png"),
          p_all_fpc, width = page3_w, height = page3_h, dpi = 150, limitsize = FALSE)
   
+  ggsave(file.path(assets_dir, "page4_year_fpc_heatmap.png"),
+         p_yr_fpc, width = page4_w, height = page4_h, dpi = 150, limitsize = FALSE)
+  
   cat(sprintf("PNG pages saved to: %s\n", assets_dir))
   
   # --- 2. Multi-page PDF, each page sized independently -----------------------
@@ -1204,6 +1293,7 @@ lapply(LL_Sections,function(SS){
   tmp_p1 <- tempfile(fileext = ".pdf")
   tmp_p2 <- tempfile(fileext = ".pdf")
   tmp_p3 <- tempfile(fileext = ".pdf")
+  tmp_p4 <- tempfile(fileext = ".pdf")
   
   # Page 1
   pdf(tmp_p1, width = page1_w, height = page1_h)
@@ -1220,18 +1310,24 @@ lapply(LL_Sections,function(SS){
   print(p_all_fpc)
   dev.off()
   
+  # Page 4
+  pdf(tmp_p4, width = page4_w, height = page4_h)
+  print(p_yr_fpc)
+  dev.off()
+  
   # Merge into one PDF with no whitespace gaps
   if (requireNamespace("qpdf", quietly = TRUE)) {
-    qpdf::pdf_combine(c(tmp_p1, tmp_p2, tmp_p3), output = pdf_path)
-    file.remove(tmp_p1, tmp_p2, tmp_p3)
+    qpdf::pdf_combine(c(tmp_p1, tmp_p2, tmp_p3, tmp_p4), output = pdf_path)
+    file.remove(tmp_p1, tmp_p2, tmp_p3, tmp_p4)
     cat(sprintf("Multi-page PDF (gap-free) saved: %s\n", pdf_path))
   } else {
     warning("Package 'qpdf' not installed; falling back to single-device PDF with potential whitespace.\n",
             "  Run install.packages('qpdf') to enable gap-free multi-page output.")
-    pdf(pdf_path, width = page1_w, height = max(page1_h, page2_h, page3_h))
+    pdf(pdf_path, width = page1_w, height = max(page1_h, page2_h, page3_h, page4_h))
     print(fig_final)
     grid.newpage(); grid.draw(fig_summary)
     grid.newpage(); print(p_all_fpc)
+    grid.newpage(); print(p_yr_fpc)
     dev.off()
   }
   
@@ -1252,10 +1348,12 @@ lapply(LL_Sections,function(SS){
     adj_r_squared   = unname(round(summary(mod_lm)$adj.r.squared, 4)),
     reduced_r2      = unname(round(summary(mod_lm_reduced)$r.squared, 4)),
     reduced_adj_r2  = unname(round(summary(mod_lm_reduced)$adj.r.squared, 4)),
+    extreme_years   = as.integer(sort(extreme_years)),
     pages           = list(
-      panels      = "page1_panels.png",
-      summary     = "page2_summary.png",
-      all_fpcs    = "page3_all_fpcs.png"
+      panels             = "page1_panels.png",
+      summary            = "page2_summary.png",
+      all_fpcs           = "page3_all_fpcs.png",
+      year_fpc_heatmap   = "page4_year_fpc_heatmap.png"
     )
   )
   

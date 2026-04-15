@@ -1,21 +1,23 @@
 {
   "site": "Madison.Varney",
-  "n_years": 27,
-  "n_fpc_full": 6,
-  "n_fpc_retained": 3,
-  "retained_fpcs": ["FPC6", "FPC4", "FPC2"],
+  "n_years": 11,
+  "n_fpc_full": 5,
+  "n_fpc_retained": 1,
+  "retained_fpcs": "FPC1",
   "p_threshold": 0.05,
   "t_threshold": 1.6,
   "S_retained": true,
-  "S_estimate": -0.447,
-  "S_p_value": 0,
-  "r_squared": 0.7836,
-  "adj_r_squared": 0.7039,
-  "reduced_r2": 0.7465,
-  "reduced_adj_r2": 0.7004,
+  "S_estimate": -0.526,
+  "S_p_value": 0.0256,
+  "r_squared": 0.8632,
+  "adj_r_squared": 0.6579,
+  "reduced_r2": 0.8162,
+  "reduced_adj_r2": 0.7703,
+  "extreme_years": 2022,
   "pages": {
     "panels": "page1_panels.png",
     "summary": "page2_summary.png",
-    "all_fpcs": "page3_all_fpcs.png"
+    "all_fpcs": "page3_all_fpcs.png",
+    "year_fpc_heatmap": "page4_year_fpc_heatmap.png"
   }
 }

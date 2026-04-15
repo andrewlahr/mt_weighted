@@ -13,9 +13,11 @@
   "adj_r_squared": 0.1215,
   "reduced_r2": 0.3333,
   "reduced_adj_r2": 0.2873,
+  "extreme_years": [1992, 1993, 1998, 2003, 2010, 2015, 2017, 2022],
   "pages": {
     "panels": "page1_panels.png",
     "summary": "page2_summary.png",
-    "all_fpcs": "page3_all_fpcs.png"
+    "all_fpcs": "page3_all_fpcs.png",
+    "year_fpc_heatmap": "page4_year_fpc_heatmap.png"
   }
 }

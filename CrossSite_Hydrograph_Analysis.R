@@ -39,7 +39,7 @@ model_dir <- "output/models"
 covariate_file <- NULL   # e.g., "data/site_covariates.csv"
 
 # Output directory for cross-site figures
-out_dir <- "docs/assets/cross_site"
+out_dir <- "output/plots/cross_site"
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
 # =============================================================================
@@ -155,6 +155,8 @@ site_results <- lapply(rdata_files, function(f) {
   list(
     site          = site_name,
     n_years       = n_years,
+    years_vec     = if (!is.null(env$years_vec)) env$years_vec else NA,
+    fpc_scores    = env$fpc_scores,
     wh_vec        = wh_vec,
     beta_full     = beta_full,
     beta_reduced  = beta_t_reduced,
@@ -526,7 +528,7 @@ p_pca <- ggplot(pca_scores, aes(x = PC1, y = PC2)) +
   # Site name labels (repelled so they don't pile up on a tight cluster)
   ggrepel::geom_text_repel(
     aes(label = site),
-    size               = 3,
+    size               = 2.6,
     color              = "grey20",
     bg.color           = "white",
     bg.r               = 0.15,
@@ -544,7 +546,7 @@ p_pca <- ggplot(pca_scores, aes(x = PC1, y = PC2)) +
     size               = 3.2,
     fontface           = "bold",
     color              = "#7a4a00",
-    fill               = scales::alpha("white", 0.6),
+    fill               = scales::alpha("white", 0.9),
     label.size         = 0.3,
     label.r            = unit(0.12, "lines"),
     label.padding      = unit(0.18, "lines"),
@@ -740,6 +742,101 @@ p_spawner <- ggplot(S_df, aes(x = S_estimate, y = site, fill = fill_grp)) +
 ggsave(file.path(out_dir, "spawner_effect_strength.png"),
        p_spawner, width = 10, height = max(5, n_sites * 0.32), dpi = 300)
 cat("Saved: spawner_effect_strength.png\n")
+
+# --- 8j. Cross-site year-by-FPC heatmap -------------------------------------
+# Builds a sites × years matrix of FPC1 scores (z-scored within each site so
+# scores are comparable across systems with different score variances). FPC1
+# is the dominant flow-variability mode at most sites, so this view answers
+# "which years had unusual flow regionally?" Years where a site's |z-score|
+# exceeds 2 are marked with a bold black border.
+#
+# Note: each site's FPC1 captures different aspects of its hydrograph, so this
+# heatmap reads more as "in which years was each site's dominant flow mode
+# unusual?" rather than "which years had the same regional anomaly." Still
+# very useful for spotting basin-wide drought / flood years.
+
+# Choose which FPC to map. FPC1 is the most-comparable across sites, but you
+# can change `which_fpc` to look at FPC2, FPC3, etc.
+which_fpc <- 1L
+
+# Pull FPC scores by site, z-score within site, identify extreme cells
+xs_yr_df <- bind_rows(lapply(site_results, function(sr) {
+  if (is.null(sr$fpc_scores) || length(sr$years_vec) < 2) return(NULL)
+  if (which_fpc > ncol(sr$fpc_scores))                    return(NULL)
+  scores <- sr$fpc_scores[, which_fpc]
+  data.frame(
+    site  = sr$site,
+    Year  = sr$years_vec,
+    score = as.numeric(scores)
+  )
+})) %>%
+  group_by(site) %>%
+  mutate(score_z = as.numeric(scale(score))) %>%
+  ungroup()
+
+# Order sites by hierarchical cluster so similar sites sit next to each other
+xs_yr_df <- xs_yr_df %>%
+  left_join(cluster_df, by = "site") %>%
+  arrange(cluster, site) %>%
+  mutate(site = factor(site, levels = unique(site)))
+
+# Identify cells with |z| > 2 for the highlight overlay
+extreme_cells <- xs_yr_df %>% filter(abs(score_z) > 2)
+
+# Identify the years that hit > 2 SD across many sites (regional anomalies)
+year_anomaly <- xs_yr_df %>%
+  group_by(Year) %>%
+  summarise(n_extreme = sum(abs(score_z) > 2, na.rm = TRUE),
+            .groups = "drop") %>%
+  arrange(desc(n_extreme))
+
+cat(sprintf("\nCross-site FPC%d anomaly counts (years with most extreme z-scores across sites):\n",
+            which_fpc))
+print(head(year_anomaly, 10), row.names = FALSE)
+
+score_lim_xs <- max(abs(xs_yr_df$score), na.rm = TRUE) * 1.05
+
+p_xs_year <- ggplot(xs_yr_df, aes(x = factor(Year), y = fct_rev(site))) +
+  geom_tile(aes(fill = score), color = "white", linewidth = 0.3) +
+  geom_tile(data = extreme_cells,
+            aes(x = factor(Year), y = fct_rev(site)),
+            fill = NA, color = "black", linewidth = 0.7,
+            inherit.aes = FALSE) +
+  scale_fill_gradient2(
+    low = "#b2182b", mid = "#f7f7f7", high = "#2166ac",
+    midpoint = 0, limits = c(-score_lim_xs, score_lim_xs),
+    name = sprintf("FPC%d\nscore", which_fpc)
+  ) +
+  labs(
+    title    = sprintf("Cross-site Year × FPC%d Score Heatmap", which_fpc),
+    subtitle = paste0(
+      "Each cell shows that site's FPC", which_fpc, " score in that year.  ",
+      "Black borders = |z-score| > 2 (extreme year for that site).  ",
+      "Sites grouped by cluster on the y-axis."
+    ),
+    x = "Year", y = NULL
+  ) +
+  theme_classic(base_size = 11) +
+  theme(plot.title       = element_text(face = "bold"),
+        plot.subtitle    = element_text(size = 9, color = "grey40"),
+        axis.text.x      = element_text(angle = 45, hjust = 1, size = 8),
+        axis.text.y      = element_text(size = 7),
+        axis.ticks       = element_blank(),
+        panel.grid       = element_blank(),
+        legend.position  = "right")
+
+ggsave(file.path(out_dir, "year_fpc_heatmap_crosssite.png"),
+       p_xs_year,
+       width  = max(11, 2 + length(unique(xs_yr_df$Year)) * 0.45),
+       height = max(5, n_sites * 0.32),
+       dpi    = 300, limitsize = FALSE)
+cat("Saved: year_fpc_heatmap_crosssite.png\n")
+
+# Save a CSV of the anomaly counts so users can sort and look up specific years
+write.csv(year_anomaly,
+          file.path(out_dir, "year_anomaly_counts.csv"),
+          row.names = FALSE)
+cat("Saved: year_anomaly_counts.csv\n")
 
 # =============================================================================
 # 9. OPTIONAL: TEST COVARIATES AGAINST CLUSTERS / ORDINATION
