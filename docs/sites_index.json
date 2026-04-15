@@ -94,9 +94,9 @@
     {
       "id": "Madison.Varney",
       "site": "Madison.Varney",
-      "n_years": 11,
-      "n_fpc_retained": 1,
-      "r_squared": 0.8632
+      "n_years": 27,
+      "n_fpc_retained": 3,
+      "r_squared": 0.7836
     },
     {
       "id": "Missouri.Cascade",
@@ -176,5 +176,5 @@
       "r_squared": 0.3281
     }
   ],
-  "generated": "2026-04-14 14:41:22"
+  "generated": "2026-04-15 09:49:13"
 }

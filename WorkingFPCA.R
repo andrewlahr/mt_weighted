@@ -221,6 +221,9 @@ lapply(LL_Sections,function(SS){
   }else{
     SS2<-SS
   }
+  if(SS=='Madison.Varney'){
+    SS2<-'Madison.PineButte'
+  }
   df<-read.csv(paste0('imputed_output/',SS2,'_imputed.csv'))%>%left_join(recruit_df)
   # df<-read.csv('weightedHydrosDatIN.csv')%>%filter(Stream.Section==SS & recruit_lag==2)
   head(df)

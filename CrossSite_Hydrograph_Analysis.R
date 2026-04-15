@@ -23,6 +23,7 @@ library(vegan)       # for NMDS, adonis2
 library(cluster)     # for silhouette
 library(dendextend)  # for coloured dendrograms
 library(corrplot)    # for correlation matrix visualisation
+library(ggrepel)     # for non-overlapping labels in the PCA biplot
 # (mgcv no longer needed here — smoothing of β(t) happens inside WorkingFPCA.R
 #  and the smoothed curve is loaded directly from the saved plot_df object)
 
@@ -40,6 +41,19 @@ covariate_file <- NULL   # e.g., "data/site_covariates.csv"
 # Output directory for cross-site figures
 out_dir <- "output/plots/cross_site"
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+
+# =============================================================================
+# Site inclusion thresholds
+# =============================================================================
+# Sites that fail any of these thresholds are EXCLUDED from clustering, PCA,
+# NMDS, and all derived figures, but they are still tracked and reported in
+# `excluded_sites_summary.csv` and printed to the console so you can see who
+# got dropped and why. Set a threshold to NA to disable that check.
+
+min_years        <- 15    # minimum number of years in the model
+min_n_sig_fpcs   <- 1     # minimum number of significant FPCs in the reduced model
+min_r2_full      <- 0.20  # minimum R² of the full FPC regression
+# Set min_r2_full <- NA to skip this check.
 
 # DOY helpers (copied from WorkingFPCA.R for consistency)
 doy_to_date <- function(doy) {
@@ -78,45 +92,50 @@ default_t_threshold <- 1.6
 site_results <- lapply(rdata_files, function(f) {
   env <- new.env()
   load(f, envir = env)
-
+  
   # Extract site name from filename
   site_name <- gsub("^LL_|_functional_regression_results\\.RData$", "",
-                     basename(f))
-
+                    basename(f))
+  
   cat(sprintf("  Loading: %s\n", site_name))
-
+  
   # --- Pull the reduced-model objects directly (saved by updated WorkingFPCA.R)
   # Fall back gracefully if any are missing (older RData files).
   has_plot_df       <- exists("plot_df", envir = env)
   has_sig_fpc_nums  <- exists("sig_fpc_nums", envir = env)
-
+  
   if (!(has_plot_df && has_sig_fpc_nums)) {
     warning(sprintf(
       "%s: .RData missing reduced-model objects (plot_df, sig_fpc_nums). Skipping. Re-run WorkingFPCA.R for this site.",
       site_name))
     return(NULL)
   }
-
+  
   plot_df       <- env$plot_df
   sig_fpc_nums  <- env$sig_fpc_nums
   beta_smooth   <- plot_df$beta_smooth
   sim_sig_pos   <- plot_df$sim_sig_pos
   sim_sig_neg   <- plot_df$sim_sig_neg
   beta_t_reduced <- plot_df$beta_raw
-
+  
   # Weighted hydrograph (365-length vector)
   wh_vec <- env$wh_df$weighted_anomaly
-
+  
   # Full-model beta(t) from beta_df (365-length, from the FULL model)
   beta_full <- env$beta_df$beta
-
+  
   # Variance explained per significant FPC (read from the saved object)
   var_expl <- env$var_explained[sig_fpc_nums] * 100
-
+  
   # Model fits — both are now constrained_lm objects
   r2_full         <- summary(env$mod_lm)$r.squared
   r2_reduced      <- summary(env$mod_lm_reduced)$r.squared
-
+  
+  # Number of years used in the model. fit_constrained_lm stores this as $n;
+  # fall back to the residual length if loading from an older lm-based RData.
+  n_years <- if (!is.null(env$mod_lm$n)) env$mod_lm$n
+  else length(residuals(env$mod_lm))
+  
   # Spawner covariate info (S_z constrained <= 0 in the model)
   full_coefs <- summary(env$mod_lm)$coefficients
   if ("S_z" %in% rownames(full_coefs)) {
@@ -132,9 +151,10 @@ site_results <- lapply(rdata_files, function(f) {
     S_p        <- NA_real_
     S_retained <- FALSE
   }
-
+  
   list(
     site          = site_name,
+    n_years       = n_years,
     wh_vec        = wh_vec,
     beta_full     = beta_full,
     beta_reduced  = beta_t_reduced,
@@ -157,8 +177,79 @@ site_results <- lapply(rdata_files, function(f) {
 # Drop sites that failed to load
 site_results <- Filter(Negate(is.null), site_results)
 names(site_results) <- sapply(site_results, `[[`, "site")
-n_sites <- length(site_results)
-cat(sprintf("\nLoaded %d sites successfully.\n", n_sites))
+n_loaded <- length(site_results)
+cat(sprintf("\nLoaded %d sites successfully.\n", n_loaded))
+
+# =============================================================================
+# 1b. APPLY INCLUSION THRESHOLDS
+# =============================================================================
+# Decide which sites pass and which get excluded, with explicit per-site reasons.
+# Excluded sites are tracked in `excluded_sites_summary.csv` and a summary table
+# is printed to the console. Kept sites carry on to clustering / PCA / NMDS.
+
+# Build a one-row-per-site bookkeeping table with all the decision inputs
+inclusion_audit <- data.frame(
+  site         = sapply(site_results, `[[`, "site"),
+  n_years      = sapply(site_results, `[[`, "n_years"),
+  n_sig_fpcs   = sapply(site_results, `[[`, "n_sig"),
+  r2_full      = sapply(site_results, `[[`, "r2_full"),
+  stringsAsFactors = FALSE
+)
+
+# Apply each threshold (NA threshold = check disabled)
+fail_years    <- if (is.na(min_years))      rep(FALSE, nrow(inclusion_audit)) else inclusion_audit$n_years < min_years
+fail_n_fpcs   <- if (is.na(min_n_sig_fpcs)) rep(FALSE, nrow(inclusion_audit)) else inclusion_audit$n_sig_fpcs < min_n_sig_fpcs
+fail_r2       <- if (is.na(min_r2_full))    rep(FALSE, nrow(inclusion_audit)) else inclusion_audit$r2_full < min_r2_full
+
+inclusion_audit$included <- !(fail_years | fail_n_fpcs | fail_r2)
+inclusion_audit$reason   <- mapply(function(fy, ff, fr) {
+  reasons <- c()
+  if (fy) reasons <- c(reasons, sprintf("n_years < %d", min_years))
+  if (ff) reasons <- c(reasons, sprintf("n_sig_fpcs < %d", min_n_sig_fpcs))
+  if (fr) reasons <- c(reasons, sprintf("r2_full < %.2f", min_r2_full))
+  if (length(reasons) == 0) "" else paste(reasons, collapse = "; ")
+}, fail_years, fail_n_fpcs, fail_r2)
+
+n_kept     <- sum(inclusion_audit$included)
+n_excluded <- nrow(inclusion_audit) - n_kept
+
+cat("\n=====================================================\n")
+cat("INCLUSION FILTER\n")
+cat("=====================================================\n")
+cat(sprintf("Thresholds:  min_years = %s,  min_n_sig_fpcs = %s,  min_r2_full = %s\n",
+            ifelse(is.na(min_years),      "off", as.character(min_years)),
+            ifelse(is.na(min_n_sig_fpcs), "off", as.character(min_n_sig_fpcs)),
+            ifelse(is.na(min_r2_full),    "off", sprintf("%.2f", min_r2_full))))
+cat(sprintf("Loaded:      %d sites\n", n_loaded))
+cat(sprintf("Included:    %d sites\n", n_kept))
+cat(sprintf("Excluded:    %d sites\n", n_excluded))
+
+if (n_excluded > 0) {
+  cat("\nExcluded sites:\n")
+  excluded_tbl <- inclusion_audit[!inclusion_audit$included,
+                                  c("site", "n_years", "n_sig_fpcs",
+                                    "r2_full", "reason")]
+  excluded_tbl$r2_full <- round(excluded_tbl$r2_full, 3)
+  print(excluded_tbl, row.names = FALSE)
+}
+cat("=====================================================\n")
+
+# Save full audit table (every site, kept + excluded) so it can be inspected later
+write.csv(inclusion_audit,
+          file.path(out_dir, "inclusion_audit.csv"),
+          row.names = FALSE)
+cat(sprintf("Saved full audit: %s\n", file.path(out_dir, "inclusion_audit.csv")))
+
+# Subset site_results to the included sites for the rest of the analysis
+kept_sites   <- inclusion_audit$site[inclusion_audit$included]
+site_results <- site_results[kept_sites]
+n_sites      <- length(site_results)
+
+if (n_sites < 3) {
+  stop("Fewer than 3 sites passed the inclusion filter (",
+       n_sites, " kept). Loosen the thresholds (min_years, min_n_sig_fpcs, ",
+       "min_r2_full) at the top of the script.")
+}
 
 # =============================================================================
 # 2. ASSEMBLE MATRICES
@@ -199,7 +290,7 @@ cor_wh <- cor(t(wh_mat))
 hc <- hclust(l2_dist, method = "ward.D2")
 
 # Optimal number of clusters via silhouette width (k = 2 to 8)
-max_k <- min(15, n_sites - 1)
+max_k <- min(5, n_sites - 1)
 sil_widths <- sapply(4:max_k, function(k) {
   cl <- cutree(hc, k = k)
   mean(silhouette(cl, l2_dist)[, "sil_width"])
@@ -263,8 +354,8 @@ metric_df <- bind_rows(lapply(site_results, function(sr) {
 
 cat("\n--- Summary Metrics ---\n")
 print(metric_df %>% dplyr::select(site, cluster, doy_peak_pos, doy_peak_neg,
-                                   n_sig_pos_days, n_sig_neg_days,
-                                   r2_full, S_retained, S_estimate))
+                                  n_sig_pos_days, n_sig_neg_days,
+                                  r2_full, S_retained, S_estimate))
 
 # =============================================================================
 # 6. PCA ON SUMMARY METRICS
@@ -417,23 +508,60 @@ cat("Saved: all_beta_curves_clustered.png\n")
 loadings_df <- as.data.frame(pca_out$rotation[, 1:2]) %>%
   rownames_to_column("variable") %>%
   mutate(
-    # Scale loadings for plotting
-    PC1 = PC1 * max(abs(pca_scores$PC1)) * 0.8,
-    PC2 = PC2 * max(abs(pca_scores$PC2)) * 0.8
+    # Scale loadings so arrows reach toward the edges of the score cloud
+    PC1 = PC1 * max(abs(pca_scores$PC1)) * 0.85,
+    PC2 = PC2 * max(abs(pca_scores$PC2)) * 0.85
   )
 
 p_pca <- ggplot(pca_scores, aes(x = PC1, y = PC2)) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "grey80") +
   geom_vline(xintercept = 0, linetype = "dashed", color = "grey80") +
+  # Loading arrows
   geom_segment(data = loadings_df,
                aes(x = 0, y = 0, xend = PC1, yend = PC2),
-               arrow = arrow(length = unit(0.2, "cm")),
-               color = "grey50", linewidth = 0.4) +
-  geom_text(data = loadings_df,
-            aes(x = PC1 * 1.12, y = PC2 * 1.12, label = variable),
-            size = 2.5, color = "grey40") +
+               arrow = arrow(length = unit(0.25, "cm"), type = "closed"),
+               color = "#7a4a00", linewidth = 0.6, alpha = 0.85) +
+  # Site points
   geom_point(aes(fill = cluster), size = 4, shape = 21, stroke = 0.5) +
-  geom_text(aes(label = site), size = 2.2, vjust = -1.2, color = "grey30") +
+  # Site name labels (repelled so they don't pile up on a tight cluster)
+  ggrepel::geom_text_repel(
+    aes(label = site),
+    size               = 2.6,
+    color              = "grey20",
+    bg.color           = "white",
+    bg.r               = 0.15,
+    max.overlaps       = Inf,
+    box.padding        = 0.3,
+    point.padding      = 0.2,
+    segment.color      = "grey70",
+    segment.size       = 0.25,
+    seed               = 1
+  ) +
+  # Loading variable labels (repelled, boxed, drawn LAST so they sit on top)
+  ggrepel::geom_label_repel(
+    data               = loadings_df,
+    aes(x = PC1, y = PC2, label = variable),
+    size               = 3.2,
+    fontface           = "bold",
+    color              = "#7a4a00",
+    fill               = scales::alpha("white", 0.9),
+    label.size         = 0.3,
+    label.r            = unit(0.12, "lines"),
+    label.padding      = unit(0.18, "lines"),
+    box.padding        = 0.6,
+    point.padding      = 0.3,
+    nudge_x            = 0,
+    nudge_y            = 0,
+    force              = 3,
+    force_pull         = 0.5,
+    max.overlaps       = Inf,
+    segment.color      = "#7a4a00",
+    segment.size       = 0.4,
+    segment.alpha      = 0.6,
+    segment.curvature  = -0.1,
+    min.segment.length = 0,
+    seed               = 2
+  ) +
   scale_fill_manual(values = clust_cols, name = "Cluster") +
   labs(
     title    = "PCA of β(t) Summary Metrics",
@@ -443,26 +571,42 @@ p_pca <- ggplot(pca_scores, aes(x = PC1, y = PC2)) +
     x = sprintf("PC1 (%.1f%%)", pca_summary$importance[2, 1] * 100),
     y = sprintf("PC2 (%.1f%%)", pca_summary$importance[2, 2] * 100)
   ) +
+  # Add a little breathing room around the data so repelled labels don't clip
+  coord_cartesian(clip = "off") +
   theme_classic(base_size = 12) +
-  theme(plot.title = element_text(face = "bold"))
+  theme(plot.title    = element_text(face = "bold"),
+        plot.margin   = margin(10, 24, 10, 10))
 
 ggsave(file.path(out_dir, "pca_biplot.png"),
-       p_pca, width = 10, height = 8, dpi = 300)
+       p_pca, width = 11, height = 9, dpi = 300)
 cat("Saved: pca_biplot.png\n")
 
 # --- 8f. NMDS ordination ------------------------------------------------------
 p_nmds <- ggplot(nmds_scores, aes(x = NMDS1, y = NMDS2)) +
   geom_point(aes(fill = cluster), size = 4, shape = 21, stroke = 0.5) +
-  geom_text(aes(label = site), size = 2.2, vjust = -1.2, color = "grey30") +
+  ggrepel::geom_text_repel(
+    aes(label = site),
+    size               = 2.7,
+    color              = "grey20",
+    bg.color           = "white",
+    bg.r               = 0.15,
+    max.overlaps       = Inf,
+    box.padding        = 0.3,
+    point.padding      = 0.2,
+    segment.color      = "grey70",
+    segment.size       = 0.25,
+    seed               = 1
+  ) +
   scale_fill_manual(values = clust_cols, name = "Cluster") +
   labs(
     title    = "NMDS Ordination of Sites by β(t) L² Distance",
     subtitle = sprintf("Stress = %.4f  |  k = 2 dimensions", nmds_out$stress),
     x = "NMDS1", y = "NMDS2"
   ) +
-  coord_equal() +
+  coord_equal(clip = "off") +
   theme_classic(base_size = 12) +
-  theme(plot.title = element_text(face = "bold"))
+  theme(plot.title  = element_text(face = "bold"),
+        plot.margin = margin(10, 24, 10, 10))
 
 ggsave(file.path(out_dir, "nmds_ordination.png"),
        p_nmds, width = 10, height = 8, dpi = 300)
@@ -651,12 +795,28 @@ if (!is.null(covariate_file) && file.exists(covariate_file)) {
       geom_segment(data = envfit_df,
                    aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2),
                    inherit.aes = FALSE,
-                   arrow = arrow(length = unit(0.2, "cm")),
-                   color = "darkgreen", linewidth = 0.6) +
-      geom_text(data = envfit_df,
-                aes(x = NMDS1 * 1.15, y = NMDS2 * 1.15, label = variable),
-                inherit.aes = FALSE,
-                size = 3, color = "darkgreen", fontface = "bold") +
+                   arrow = arrow(length = unit(0.25, "cm"), type = "closed"),
+                   color = "darkgreen", linewidth = 0.7) +
+      ggrepel::geom_label_repel(
+        data               = envfit_df,
+        aes(x = NMDS1, y = NMDS2, label = variable),
+        inherit.aes        = FALSE,
+        size               = 3.4,
+        fontface           = "bold",
+        color              = "darkgreen",
+        fill               = scales::alpha("white", 0.9),
+        label.size         = 0.3,
+        label.r            = unit(0.12, "lines"),
+        label.padding      = unit(0.18, "lines"),
+        box.padding        = 0.6,
+        force              = 3,
+        max.overlaps       = Inf,
+        segment.color      = "darkgreen",
+        segment.size       = 0.4,
+        segment.alpha      = 0.6,
+        min.segment.length = 0,
+        seed               = 3
+      ) +
       labs(title = "NMDS with Environmental Vectors (envfit)")
     
     ggsave(file.path(out_dir, "nmds_with_covariates.png"),
@@ -686,7 +846,10 @@ cat("\nSaved: cross_site_summary_metrics.csv\n")
 cat("\n============================================================\n")
 cat("CROSS-SITE ANALYSIS COMPLETE\n")
 cat("============================================================\n")
-cat(sprintf("Sites analysed:        %d\n", n_sites))
+cat(sprintf("Sites loaded:          %d\n", n_loaded))
+cat(sprintf("Sites included:        %d\n", n_sites))
+cat(sprintf("Sites excluded:        %d  (see inclusion_audit.csv for reasons)\n",
+            n_excluded))
 cat(sprintf("Optimal clusters:      %d (silhouette = %.3f)\n", k_opt, max(sil_widths)))
 cat(sprintf("NMDS stress:           %.4f\n", nmds_out$stress))
 cat(sprintf("PCA (PC1 + PC2):       %.1f%% of metric variance\n",
