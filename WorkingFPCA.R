@@ -161,10 +161,10 @@ print.summary.constrained_lm <- function(x, ...) {
 }
 
 LL_Sections<-read.csv("data/LL_all_df.csv")%>%pull(Stream.Section)%>%unique()
-
+LL_Sections<-c(LL_Sections,'Jefferson.Waterloo')
 # skipSites<-c('Beaverhead.FishAndGame"')
 lapply(LL_Sections,function(SS){
-  # SS<-"Ruby.SilverSprings"
+  # SS<-"Jefferson.Waterloo"
   print(SS)
   
   # =============================================================================
@@ -192,13 +192,16 @@ lapply(LL_Sections,function(SS){
   # --- 1. Load and inspect data -----------------------------------------------
   Stream<-strsplit(SS,split = '\\.')[[1]][1]
   Section<-strsplit(SS,split = '\\.')[[1]][2]
-   StreamSection<-paste0(strsplit(SS,split = '\\.')[[1]][1],strsplit(SS,split = '\\.')[[1]][2])
+  StreamSection<-paste0(strsplit(SS,split = '\\.')[[1]][1],strsplit(SS,split = '\\.')[[1]][2])
   if(SS=="BigHole.Melrose"){
-    FishDat<-read.csv(here::here('../../LL/JAGS_PVA/ModelOutput/csvs_quadratic/',paste0(Stream,Section,"allParams.csv")))%>%
+    FishDat<-read.csv(here::here('../../LL/JAGS_PVA/ModelOutput/csvs_quadratic/',paste0(Stream,Section,"allParams_031126.csv")))%>%
       filter(SummerLag==2 & WinterLag==2)
+  }else{if(SS=='Jefferson.Waterloo'){
+    FishDat<- read.csv(paste0('../../Jefferson/JAGS_PVA/ModelOutput/csvs_quadratic/',StreamSection,"_LLallParams_update2026.csv"),header=T)%>%filter(grepl("SUMMERQ",model)|grepl("Global",model))
   }else{
-    FishDat <- read.csv(paste0('../../LL/JAGS_PVA/ModelOutput/csvs_quadratic/',StreamSection,"allParams.csv"),header=T)%>%filter(topMod=='yes')%>%filter(grepl("SUMMERQ",model)|grepl("Global",model))
+    FishDat <- read.csv(paste0('../../LL/JAGS_PVA/ModelOutput/csvs_quadratic/',StreamSection,"allParams_031126.csv"),header=T)%>%filter(grepl("SUMMERQ",model)|grepl("Global",model))
     
+  }  
   }
   
   head(FishDat)

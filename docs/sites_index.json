@@ -5,176 +5,183 @@
       "site": "Beaverhead.FishAndGame",
       "n_years": 21,
       "n_fpc_retained": 2,
-      "r_squared": 0.5478
+      "r_squared": 0.5911
     },
     {
       "id": "Beaverhead.Hildreth",
       "site": "Beaverhead.Hildreth",
       "n_years": 43,
-      "n_fpc_retained": 2,
-      "r_squared": 0.3925
+      "n_fpc_retained": 1,
+      "r_squared": 0.3682
     },
     {
       "id": "BigHole.HogBack",
       "site": "BigHole.HogBack",
       "n_years": 26,
       "n_fpc_retained": 2,
-      "r_squared": 0.6761
+      "r_squared": 0.6822
     },
     {
       "id": "BigHole.Melrose",
       "site": "BigHole.Melrose",
       "n_years": 32,
       "n_fpc_retained": 2,
-      "r_squared": 0.4049
+      "r_squared": 0.4287
     },
     {
       "id": "Bighorn.Bighorn",
       "site": "Bighorn.Bighorn",
       "n_years": 28,
       "n_fpc_retained": 1,
-      "r_squared": 0.1746
+      "r_squared": 0.1954
     },
     {
       "id": "Bighorn.MallardsLanding",
       "site": "Bighorn.MallardsLanding",
-      "n_years": 34,
+      "n_years": 35,
       "n_fpc_retained": 1,
-      "r_squared": 0.5515
+      "r_squared": 0.5301
     },
     {
       "id": "Bitterroot.BellCrossing",
       "site": "Bitterroot.BellCrossing",
-      "n_years": 33,
+      "n_years": 34,
       "n_fpc_retained": 3,
-      "r_squared": 0.5962
+      "r_squared": 0.5773
     },
     {
       "id": "Bitterroot.Darby",
       "site": "Bitterroot.Darby",
-      "n_years": 40,
-      "n_fpc_retained": 2,
-      "r_squared": 0.7838
+      "n_years": 41,
+      "n_fpc_retained": 1,
+      "r_squared": 0.7671
     },
     {
       "id": "Blackfoot.Johnsrud",
       "site": "Blackfoot.Johnsrud",
       "n_years": 34,
-      "n_fpc_retained": 5,
-      "r_squared": 0.6255
+      "n_fpc_retained": 7,
+      "r_squared": 0.6077
     },
     {
       "id": "Blackfoot.ScottyBrown",
       "site": "Blackfoot.ScottyBrown",
       "n_years": 34,
       "n_fpc_retained": 1,
-      "r_squared": 0.5579
+      "r_squared": 0.5875
     },
     {
       "id": "Boulder.B2",
       "site": "Boulder.B2",
       "n_years": 41,
       "n_fpc_retained": 1,
-      "r_squared": 0.313
+      "r_squared": 0.4118
+    },
+    {
+      "id": "Jefferson.Waterloo",
+      "site": "Jefferson.Waterloo",
+      "n_years": 24,
+      "n_fpc_retained": 3,
+      "r_squared": 0.5807
     },
     {
       "id": "Madison.Norris",
       "site": "Madison.Norris",
       "n_years": 43,
-      "n_fpc_retained": 3,
-      "r_squared": 0.4464
+      "n_fpc_retained": 4,
+      "r_squared": 0.4488
     },
     {
       "id": "Madison.PineButte",
       "site": "Madison.PineButte",
-      "n_years": 42,
+      "n_years": 43,
       "n_fpc_retained": 1,
-      "r_squared": 0.5047
+      "r_squared": 0.5069
     },
     {
       "id": "Madison.Varney",
       "site": "Madison.Varney",
-      "n_years": 11,
-      "n_fpc_retained": 1,
-      "r_squared": 0.8632
+      "n_years": 12,
+      "n_fpc_retained": 3,
+      "r_squared": 0.9505
     },
     {
       "id": "Missouri.Cascade",
       "site": "Missouri.Cascade",
       "n_years": 35,
-      "n_fpc_retained": 3,
-      "r_squared": 0.6114
+      "n_fpc_retained": 2,
+      "r_squared": 0.5859
     },
     {
       "id": "Missouri.Craig",
       "site": "Missouri.Craig",
       "n_years": 40,
       "n_fpc_retained": 1,
-      "r_squared": 0.7239
+      "r_squared": 0.6621
     },
     {
       "id": "RockCreek.FishAndGame",
       "site": "RockCreek.FishAndGame",
       "n_years": 19,
       "n_fpc_retained": 2,
-      "r_squared": 0.858
+      "r_squared": 0.8093
     },
     {
       "id": "RockCreek.HogBack",
       "site": "RockCreek.HogBack",
-      "n_years": 14,
+      "n_years": 17,
       "n_fpc_retained": 1,
-      "r_squared": 0.8828
+      "r_squared": 0.8445
     },
     {
       "id": "Ruby.SilverSprings",
       "site": "Ruby.SilverSprings",
       "n_years": 34,
       "n_fpc_retained": 3,
-      "r_squared": 0.4158
+      "r_squared": 0.4119
     },
     {
       "id": "Ruby.Vigilante",
       "site": "Ruby.Vigilante",
-      "n_years": 24,
+      "n_years": 25,
       "n_fpc_retained": 1,
-      "r_squared": 0.3907
+      "r_squared": 0.263
     },
     {
       "id": "Shields.ConvictGrade",
       "site": "Shields.ConvictGrade",
       "n_years": 42,
       "n_fpc_retained": 2,
-      "r_squared": 0.3959
+      "r_squared": 0.4097
     },
     {
       "id": "Shields.Zimmerman",
       "site": "Shields.Zimmerman",
       "n_years": 42,
       "n_fpc_retained": 4,
-      "r_squared": 0.6466
+      "r_squared": 0.6385
     },
     {
       "id": "Smith.EagleCreek",
       "site": "Smith.EagleCreek",
-      "n_years": 26,
+      "n_years": 27,
       "n_fpc_retained": 2,
-      "r_squared": 0.3914
+      "r_squared": 0.4249
     },
     {
       "id": "Yellowstone.CorwinSprings",
       "site": "Yellowstone.CorwinSprings",
       "n_years": 42,
       "n_fpc_retained": 4,
-      "r_squared": 0.5522
+      "r_squared": 0.5473
     },
     {
       "id": "Yellowstone.MillCreek",
       "site": "Yellowstone.MillCreek",
       "n_years": 42,
       "n_fpc_retained": 1,
-      "r_squared": 0.3281
+      "r_squared": 0.3314
     }
   ],
-  "generated": "2026-04-15 12:20:09"
+  "generated": "2026-04-21 11:58:10"
 }
